@@ -1,0 +1,212 @@
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+
+import javafx.application.Application;
+import javafx.collections.ObservableList;
+import javafx.css.converter.InsetsConverter;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+
+public class App extends Application {
+    Stage windowStage;
+    TableView<listgame> table;
+    TableView<listgame> tableView = new TableView<listgame>();
+    TextField idInput, nama_gameInput, jenis_gameInput, kode_gameInput, ukuranInput;
+
+    @Override
+    public void start(Stage stage) {
+
+        // Menampilkan nama window
+        windowStage = stage;
+        windowStage.setTitle("DataBase - listgame");
+       
+        //Menampilkan tabel
+        TableColumn<listgame, String> columnID = new TableColumn<>("ID");
+        columnID.setCellValueFactory(new PropertyValueFactory<>("id"));
+
+        TableColumn<listgame, String> columnNama_game = new TableColumn<>("Nama Game");
+        columnNama_game.setCellValueFactory(new PropertyValueFactory<>("nama_game"));
+
+        TableColumn<listgame, String> columnJenis_game = new TableColumn<>("Jenis Game");
+        columnlist_game.setCellValueFactory(new PropertyValueFactory<>("jenis_game"));
+
+        TableColumn<listgame, String> columnCode_game = new TableColumn<>("Code Game");
+        columnCode_game.setCellValueFactory(new PropertyValueFactory<>("Code_Game"));
+
+        TableColumn<listgame, String> columnUkuran_game = new TableColumn<>("ukuran Game");
+        columnukuran_game.setCellValueFactory(new PropertyValueFactory<>("ukuran_game"));
+        
+        tableView.getColumns().add(columnID);
+        tableView.getColumns().add(columnNama_game);
+        tableView.getColumns().add(columnJenis_game);
+        tableView.getColumns().add(columnCode_game);
+        tableView.getColumns().add(columnUkuran_game);
+
+        //Input id
+        idInput = new TextField();
+        idInput.setPromptText("id");
+        idInput.setMinWidth(10);
+
+        //Input nama game
+        nama_gameInput = new TextField();
+        nama_gameInput.setPromptText("Nama game");
+        nama_gameInput.setMinWidth(20);
+
+        //Input Jenis game
+        jenis_gameInput = new TextField();
+        jenis_gameInput.setPromptText("Jenis Game");
+        jenis_gameInput.setMinWidth(20);
+
+        //Input Code game
+        code_gameInput = new TextField();
+        code_gameInput.setPromptText("Code Game");
+        code_gameInput.setMinWidth(20);
+
+        //Input ukuran game
+        ukuran_gameInput = new TextField();
+        ukuran_gameInput.setPromptText("ukuran game");
+        ukuran_gameInput.setMinWidth(20);
+
+        //Button
+        Button editButton = new Button("Edit");
+        editButton.setOnAction(e -> editButtonClicked());
+        Button updateButton = new Button("Update");
+        updateButton.setOnAction(e -> updateButtonClicked());
+        Button deleteButton = new Button("Delete");
+        deleteButton.setOnAction(e -> deleteButtonClicked());
+
+        HBox hBox = new HBox();
+        hBox.setPadding(new Insets(10,10,10,10));
+        hBox.setSpacing(10);
+        hBox.getChildren().addAll(idInput, nama_gameInput, jenis_gameInput, code_gameInput, ukuran_gameInput, editButton, updateButton, deleteButton);
+
+        String url = "jdbc:mysql://localhost:3306/list_game";
+        String user = "root";
+        String pass = "";
+
+        try {
+            Connection conn = DriverManager.getConnection(url, user, pass);
+            Statement stmt = conn.createStatement();
+            ResultSet record = stmt.executeQuery("select*from list_game");
+
+            while (record.next()) {
+                tableView.getItems().add(new barang(record.getInt("id"), record.getString("nama_game"), record.getString("jenis_game"), record.getString("code_game"), record.getString("ukuran_game")));
+            }
+        }
+        catch (SQLException e) {
+            System.out.print("koneksi gagal");
+        }
+        
+
+        VBox vbox = new VBox(tableView);
+        vbox.getChildren().addAll(hBox);
+
+        Scene scene = new Scene(vbox);
+
+        stage.setScene(scene);
+        stage.show();
+
+    }
+
+
+
+
+    //Update Button Clicked
+    private void updateButtonClicked(){
+
+        Database db = new Database();
+                try {
+                    Statement state = db.conn.createStatement();
+                    String sql = "insert into list_game SET nama_game='%s', jenis_game='%s', code_game='%s', ukuran_game='%s'";
+                    sql = String.format(sql, nama_gameInput.getText(), jenis_gameInput.getText(), code_gameInput.getText(), ukuran_gameInput.getText());
+                    state.execute(sql);
+                    // idInput.clear();
+                    nama_gameInput.clear();
+                    jenis_gameInput.clear();
+                    kode_gameInput.clear();
+                    ukuran_gameInput.clear();
+                    loadData();
+                } catch (SQLException e1) {
+                    e1.printStackTrace();
+                }
+            
+        };
+
+
+    //Edit Button Clicked
+    private void editButtonClicked(){
+
+        Database db = new Database();
+        try {
+            Statement state = db.conn.createStatement();
+            String sql = "update list_game set jenis_game = '%s' ,  ukuran_game = '%s' WHERE kode_game ='%s'";
+            sql = String.format(sql, jenis_gameInput.getText(), ukuran_gameInput.getText(),kode_gameInput.getText());
+            state.execute(sql);
+            jenis_gameInput.clear();
+            ukuran_gameInput.clear();
+            kode_gameInput.clear();
+            loadData();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    //Delete button Clicked
+    private void deleteButtonClicked(){
+
+        Database db = new Database();
+        try{
+            Statement state = db.conn.createStatement();
+            String sql = "delete from list_game where kode_game ='%s';";
+            sql = String.format(sql, kode_gameInput.getText());
+            state.execute(sql);
+            kode_gameInput.clear();
+            loadData();
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+
+    }
+    
+
+    public static void main(String[] args) {
+        launch();
+    }
+
+    private void loadData() {
+        Statement stmt;
+        try {
+            Database db = new Database();
+            stmt = db.conn.createStatement();
+            ResultSet rs = stmt.executeQuery("select * from list_game");
+            tableView.getItems().clear();
+            while(rs.next()){
+                tableView.getItems().add(new barang(rs.getInt("id"), rs.getString("nama_game"), rs.getString("jenis_game"), rs.getString("kode_game"), rs.getString("ukuran_game")));
+            }
+            
+            stmt.close();
+            db.conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    
+
+}
